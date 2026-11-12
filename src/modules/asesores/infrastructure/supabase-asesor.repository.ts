@@ -3,32 +3,8 @@ import { Asesor, CreateAsesorDTO } from '../domain/asesor.entity';
 import { getSupabaseClient } from '@/lib/supabase/client';
 
 // Mock de fallback para pruebas antes de configurar Supabase
-const MOCK_ASESORES: Asesor[] = [
-  {
-    id: '11111111-1111-1111-1111-111111111111',
-    codigoSlug: 'carlos-mendez',
-    nombre: 'Carlos Méndez',
-    cargo: 'Asesor Técnico Comercial',
-    activo: true,
-    createdAt: new Date().toISOString(),
-  },
-  {
-    id: '22222222-2222-2222-2222-222222222222',
-    codigoSlug: 'valentina-gomez',
-    nombre: 'Valentina Gómez',
-    cargo: 'Especialista en Material Eléctrico',
-    activo: true,
-    createdAt: new Date().toISOString(),
-  },
-  {
-    id: '33333333-3333-3333-3333-333333333333',
-    codigoSlug: 'asesor-01',
-    nombre: 'Juan Pablo Restrepo',
-    cargo: 'Atención al Cliente',
-    activo: true,
-    createdAt: new Date().toISOString(),
-  },
-];
+// Lista vacía para producción
+const MOCK_ASESORES: Asesor[] = [];
 
 export class SupabaseAsesorRepository implements IAsesorRepository {
   async findBySlug(slug: string): Promise<Asesor | null> {

@@ -50,11 +50,3 @@ ON calificaciones FOR INSERT WITH CHECK (true);
 -- Calificaciones: Permitir lectura para métricas y buzón de opiniones
 CREATE POLICY "Permitir lectura de calificaciones" 
 ON calificaciones FOR SELECT USING (true);
-
--- 5. Datos Iniciales de Prueba (Semilla / Seed)
-INSERT INTO asesores (codigo_slug, nombre, cargo, activo)
-VALUES 
-    ('carlos-mendez', 'Carlos Méndez', 'Asesor Técnico Comercial', true),
-    ('valentina-gomez', 'Valentina Gómez', 'Especialista en Material Eléctrico', true),
-    ('asesor-01', 'Juan Pablo Restrepo', 'Atención al Cliente', true)
-ON CONFLICT (codigo_slug) DO NOTHING;
