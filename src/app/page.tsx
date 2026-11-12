@@ -248,22 +248,22 @@ export default function AdminDashboardPage() {
       <header className="bg-slate-950 text-white sticky top-0 z-30 shadow-md border-b border-slate-800 print:hidden">
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
           <div className="h-16 flex items-center justify-between gap-4">
-            {/* Logo e Identidad Corporativa INTERELECTRICOS */}
-            <div className="flex items-center gap-3">
-              <div className="bg-white px-2.5 py-1.5 rounded-xl flex items-center justify-center shadow-xs">
+            {/* Logo e Identidad Corporativa INTERELECTRICOS (Sin caja blanca, más grande y nítido) */}
+            <div className="flex items-center gap-4">
+              <Link href="/" className="flex items-center transition hover:opacity-90">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src="/images/logo-interelectricos.png"
                   alt={ENV.companyName}
-                  className="h-6 w-auto object-contain"
+                  className="h-9 md:h-10 w-auto object-contain"
                 />
-              </div>
-              <div className="hidden md:block h-5 w-px bg-slate-800" />
+              </Link>
+              <div className="hidden md:block h-6 w-px bg-slate-800" />
               <div className="hidden md:flex flex-col">
                 <span className="text-xs font-bold tracking-tight text-white leading-none">
                   Gestión de Calidad
                 </span>
-                <span className="text-[10px] text-slate-400 font-medium leading-tight mt-0.5">
+                <span className="text-[10px] text-slate-400 font-medium leading-tight mt-1">
                   Atención en Mostrador
                 </span>
               </div>
@@ -564,49 +564,49 @@ export default function AdminDashboardPage() {
             </div>
           )}
 
-          {/* Barra de Configuración de Fichas QR (Select Desplegable Múltiple y Select de Formato) */}
+          {/* Barra de Configuración de Fichas QR (Selects con diseño idéntico y homogéneo) */}
           {activeTab === 'qr' && (
-            <div className="bg-white p-4 rounded-2xl border border-slate-200/90 shadow-2xs flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
-              {/* Select 1: Diseño de Impresión */}
-              <div className="flex items-center gap-2 w-full md:w-auto">
-                <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 w-full md:w-auto">
-                  <Layers className="w-4 h-4 text-slate-500 shrink-0" />
-                  <div className="flex flex-col">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Formato de Hoja</span>
-                    <select
-                      value={layoutMode}
-                      onChange={(e) => setLayoutMode(e.target.value as LayoutMode)}
-                      className="bg-transparent text-xs font-bold text-slate-900 focus:outline-none cursor-pointer"
-                    >
-                      <option value="vertical-2">Hoja Vertical (2 grandes — Recomendado)</option>
-                      <option value="horizontal-2">Hoja Horizontal (2 lado a lado)</option>
-                      <option value="grid-4">4 por hoja (2x2 para adhesivos o soportes)</option>
-                    </select>
-                  </div>
+            <div className="bg-white p-4 rounded-2xl border border-slate-200/90 shadow-2xs flex flex-col sm:flex-row gap-4 items-stretch sm:items-center">
+              {/* Selector 1: Formato de Hoja */}
+              <div className="flex-1 flex flex-col">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1 flex items-center gap-1.5">
+                  <Layers className="w-3.5 h-3.5 text-slate-400" />
+                  <span>Formato de Hoja</span>
+                </span>
+                <div className="relative">
+                  <select
+                    value={layoutMode}
+                    onChange={(e) => setLayoutMode(e.target.value as LayoutMode)}
+                    className="w-full bg-slate-50 border border-slate-200 hover:border-slate-300 rounded-xl px-3.5 py-2.5 text-xs font-semibold text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#f2e205] focus:border-slate-900 transition appearance-none cursor-pointer pr-9"
+                  >
+                    <option value="vertical-2">1 Ficha por Hoja (Grande centrada)</option>
+                    <option value="horizontal-2">2 Fichas por Hoja (Horizontal lado a lado)</option>
+                    <option value="grid-4">4 Fichas por Hoja (2x2 para adhesivos)</option>
+                  </select>
+                  <ChevronDown className="w-4 h-4 text-slate-500 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
                 </div>
               </div>
 
-              {/* Select 2: Dropdown Desplegable con Selección Múltiple de Asesores */}
-              <div className="relative w-full md:w-80" ref={dropdownRef}>
-                <div className="flex flex-col">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">
-                    Seleccionar Asesores ({selectedQrAsesorIds.length} seleccionados)
+              {/* Selector 2: Dropdown Desplegable con Selección Múltiple de Asesores */}
+              <div className="flex-1 flex flex-col relative" ref={dropdownRef}>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1 flex items-center gap-1.5">
+                  <Users className="w-3.5 h-3.5 text-slate-400" />
+                  <span>Asesores ({selectedQrAsesorIds.length} seleccionados)</span>
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setIsAsesorDropdownOpen((prev) => !prev)}
+                  className="w-full bg-slate-50 border border-slate-200 hover:border-slate-300 rounded-xl px-3.5 py-2.5 text-xs font-semibold text-slate-900 flex items-center justify-between transition cursor-pointer text-left"
+                >
+                  <span className="truncate">
+                    {selectedQrAsesorIds.length === 0
+                      ? 'Ningún asesor seleccionado'
+                      : selectedQrAsesorIds.length === asesores.length
+                      ? 'Todos los asesores seleccionados'
+                      : `${selectedQrAsesorIds.length} de ${asesores.length} seleccionados`}
                   </span>
-                  <button
-                    type="button"
-                    onClick={() => setIsAsesorDropdownOpen((prev) => !prev)}
-                    className="w-full bg-slate-50 border border-slate-200 hover:border-slate-300 rounded-xl px-3.5 py-2.5 text-xs font-semibold text-slate-900 flex items-center justify-between transition cursor-pointer"
-                  >
-                    <span className="truncate">
-                      {selectedQrAsesorIds.length === 0
-                        ? 'Ningún asesor seleccionado'
-                        : selectedQrAsesorIds.length === asesores.length
-                        ? 'Todos los asesores seleccionados'
-                        : `${selectedQrAsesorIds.length} de ${asesores.length} seleccionados`}
-                    </span>
-                    <ChevronDown className={`w-4 h-4 text-slate-500 transition-transform ${isAsesorDropdownOpen ? 'rotate-180' : ''}`} />
-                  </button>
-                </div>
+                  <ChevronDown className={`w-4 h-4 text-slate-500 shrink-0 transition-transform ${isAsesorDropdownOpen ? 'rotate-180' : ''}`} />
+                </button>
 
                 {/* Menú Desplegable Flotante */}
                 {isAsesorDropdownOpen && (
@@ -957,13 +957,13 @@ export default function AdminDashboardPage() {
                   return (
                     <div
                       key={asesor.id}
-                      className="w-full flex items-center justify-center print:break-inside-avoid print:page-break-inside-avoid print:py-2"
+                      className="w-full flex items-center justify-center print:break-inside-avoid print:page-break-inside-avoid print:py-4"
                     >
                       {/* Tarjeta de corte Cuadrada con Borde Punteado */}
                       <div
                         className={`w-full aspect-square bg-white rounded-3xl border-2 border-dashed border-slate-400 print:border-slate-500 p-6 flex flex-col items-center justify-between text-center shadow-xs print:shadow-none print:rounded-2xl transition box-border ${
                           layoutMode === 'vertical-2'
-                            ? 'max-w-[340px] print:max-w-[145mm] print:max-h-[145mm] print:my-2'
+                            ? 'max-w-[340px] print:max-w-[145mm] print:max-h-[145mm] print:my-4'
                             : layoutMode === 'horizontal-2'
                             ? 'max-w-[320px] print:max-w-[125mm] print:max-h-[125mm]'
                             : 'max-w-[250px] print:max-w-[88mm] print:max-h-[88mm] p-4'
