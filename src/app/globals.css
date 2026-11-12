@@ -37,4 +37,9 @@ body {
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
   }
+
+  /* Cuando el modal individual de QR está abierto, oculta todo el contenido principal del dashboard */
+  .modal-qr-active .print-hide-when-modal {
+    display: none !important;
+  }
 }

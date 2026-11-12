@@ -243,7 +243,7 @@ export default function AdminDashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-100/70 text-slate-900 flex flex-col font-sans">
+    <div className={`min-h-screen bg-slate-100/70 text-slate-900 flex flex-col font-sans ${qrModalAsesor ? 'modal-qr-active' : ''}`}>
       {/* Top Bar Administrativa Ejecutiva */}
       <header className="bg-slate-950 text-white sticky top-0 z-30 shadow-md border-b border-slate-800 print:hidden">
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
@@ -380,7 +380,7 @@ export default function AdminDashboardPage() {
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto w-full px-4 sm:px-6 py-6 sm:py-8 flex-1 print:p-0 print:m-0 print:max-w-none">
+      <main className="max-w-7xl mx-auto w-full px-4 sm:px-6 py-6 sm:py-8 flex-1 print:p-0 print:m-0 print:max-w-none print-hide-when-modal">
         {/* KPI Cards / Métricas Clave (Presentes siempre en la parte superior) */}
         <section className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-5 mb-6 sm:mb-8 print:hidden">
           {/* Card 1: Promedio de Rayos */}
