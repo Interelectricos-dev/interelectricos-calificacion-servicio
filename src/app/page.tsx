@@ -188,7 +188,7 @@ export default function AdminDashboardPage() {
             </div>
             <div className="flex items-baseline gap-2">
               <span className="text-3xl font-black text-slate-900 tracking-tight">
-                {metricasGenerales.promedioRayos}
+                {metricasGenerales.totalCalificaciones > 0 ? metricasGenerales.promedioRayos : '0.0'}
               </span>
               <span className="text-xs text-slate-400 font-bold">/ 5.0</span>
             </div>
@@ -222,7 +222,7 @@ export default function AdminDashboardPage() {
             </div>
             <div className="flex items-baseline gap-2">
               <span className="text-3xl font-black text-emerald-600 tracking-tight">
-                {metricasGenerales.porcentajeSatisfaccion}%
+                {metricasGenerales.totalCalificaciones > 0 ? `${metricasGenerales.porcentajeSatisfaccion}%` : '0%'}
               </span>
             </div>
             <p className="text-[11px] text-slate-400 mt-1 font-medium">Votos de 4 y 5 rayos</p>
@@ -345,8 +345,10 @@ export default function AdminDashboardPage() {
                       <td className="py-4 px-6 text-center">
                         <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-yellow-50 border border-yellow-200/60 font-bold text-slate-900">
                           <Zap className="w-3.5 h-3.5 fill-[#f2e205] text-slate-900" />
-                          <span>{promedio}</span>
-                          <span className="text-[10px] text-slate-400 font-normal">({total} votos)</span>
+                          <span>{promedio > 0 ? promedio : '-'}</span>
+                          <span className="text-[10px] text-slate-400 font-normal">
+                            ({total} {total === 1 ? 'voto' : 'votos'})
+                          </span>
                         </div>
                       </td>
 

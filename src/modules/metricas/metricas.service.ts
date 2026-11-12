@@ -24,8 +24,8 @@ export class MetricasService {
     if (total === 0) {
       return {
         totalCalificaciones: 0,
-        promedioRayos: 5.0,
-        porcentajeSatisfaccion: 100,
+        promedioRayos: 0,
+        porcentajeSatisfaccion: 0,
         distribucionRayos: distribucion,
       };
     }
@@ -59,8 +59,8 @@ export class MetricasService {
       return {
         asesor,
         total,
-        promedio: total > 0 ? Number((suma / total).toFixed(1)) : 5.0,
-        satisfaccion: total > 0 ? Math.round((positivos / total) * 100) : 100,
+        promedio: total > 0 ? Number((suma / total).toFixed(1)) : 0,
+        satisfaccion: total > 0 ? Math.round((positivos / total) * 100) : 0,
         ultimasCalificaciones: delAsesor.slice(0, 5),
       };
     });
