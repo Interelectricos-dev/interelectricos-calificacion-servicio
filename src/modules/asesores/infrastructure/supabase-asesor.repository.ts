@@ -130,6 +130,37 @@ export class SupabaseAsesorRepository implements IAsesorRepository {
     return this.mapToDomain(data);
   }
 
+  async update(id: string, updateData: { nombre: string; cargo?: string }): Promise<Asesor> {
+    const supabase = getSupabaseClient();
+
+    if (!supabase) {
+      const index = MOCK_ASESORES.findIndex((a) => a.id === id);
+      if (index === -1) throw new Error('Asesor no encontrado');
+      MOCK_ASESORES[index] = {
+        ...MOCK_ASESORES[index],
+        nombre: updateData.nombre.trim(),
+        cargo: updateData.cargo?.trim() || 'Asesor Comercial',
+      };
+      return MOCK_ASESORES[index];
+    }
+
+    const { data, error } = await supabase
+      .from('asesores')
+      .update({
+        nombre: updateData.nombre.trim(),
+        cargo: updateData.cargo?.trim() || 'Asesor Comercial',
+      })
+      .eq('id', id)
+      .select('*')
+      .single();
+
+    if (error || !data) {
+      throw new Error(`Error al actualizar el asesor: ${error?.message || 'Error desconocido'}`);
+    }
+
+    return this.mapToDomain(data);
+  }
+
   // Mapper para desacoplar el esquema SQL snake_case del modelo de dominio camelCase
   private mapToDomain(row: Record<string, unknown>): Asesor {
     return {

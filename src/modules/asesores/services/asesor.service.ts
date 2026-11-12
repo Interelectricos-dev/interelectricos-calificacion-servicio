@@ -70,5 +70,20 @@ export class AsesorService {
   async toggleAsesorStatus(id: string, activo: boolean): Promise<Asesor> {
     return this.asesorRepository.updateActivo(id, activo);
   }
+
+  /**
+   * Actualiza el nombre y cargo de un asesor manteniendo intacto su código slug para no romper QRs físicos
+   */
+  async updateAsesor(id: string, data: { nombre: string; cargo?: string }): Promise<Asesor> {
+    const trimmedNombre = data.nombre.trim();
+    if (!trimmedNombre) {
+      throw new Error('El nombre del asesor es obligatorio.');
+    }
+
+    return this.asesorRepository.update(id, {
+      nombre: trimmedNombre,
+      cargo: data.cargo?.trim() || 'Asesor Comercial',
+    });
+  }
 }
 

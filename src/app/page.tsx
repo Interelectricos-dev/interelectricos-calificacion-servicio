@@ -8,6 +8,7 @@ import { metricasService, ResumenMetricas, MetricasAsesor } from '@/modules/metr
 import { adminAuthService } from '@/modules/auth/auth.service';
 import { AdminLoginForm } from '@/components/admin/AdminLoginForm';
 import { CreateAsesorModal } from '@/components/admin/CreateAsesorModal';
+import { EditAsesorModal } from '@/components/admin/EditAsesorModal';
 import { QuickQrModal } from '@/components/admin/QuickQrModal';
 import { isSupabaseConfigured, ENV } from '@/config/env';
 import {
@@ -25,6 +26,7 @@ import {
   ExternalLink,
   ShieldCheck,
   TrendingUp,
+  Pencil,
 } from 'lucide-react';
 
 export default function AdminDashboardPage() {
@@ -33,6 +35,7 @@ export default function AdminDashboardPage() {
   const [calificaciones, setCalificaciones] = useState<Calificacion[]>([]);
   const [activeTab, setActiveTab] = useState<'asesores' | 'comentarios'>('asesores');
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [editingAsesor, setEditingAsesor] = useState<Asesor | null>(null);
   const [qrModalAsesor, setQrModalAsesor] = useState<Asesor | null>(null);
   const [, startTransition] = useTransition();
 
@@ -370,10 +373,19 @@ export default function AdminDashboardPage() {
                       {/* Acciones */}
                       <td className="py-4 px-6 text-right">
                         <div className="flex items-center justify-end gap-2">
+                          {/* Editar Asesor */}
+                          <button
+                            onClick={() => setEditingAsesor(asesor)}
+                            className="p-2 rounded-xl text-slate-600 hover:text-slate-900 hover:bg-slate-100 border border-slate-200 transition cursor-pointer"
+                            title="Editar Nombre o Cargo"
+                          >
+                            <Pencil className="w-4 h-4 text-slate-700" />
+                          </button>
+
                           {/* Ver QR */}
                           <button
                             onClick={() => setQrModalAsesor(asesor)}
-                            className="p-2 rounded-xl text-slate-600 hover:text-slate-900 hover:bg-slate-100 border border-slate-200 transition"
+                            className="p-2 rounded-xl text-slate-600 hover:text-slate-900 hover:bg-slate-100 border border-slate-200 transition cursor-pointer"
                             title="Ver Código QR"
                           >
                             <QrCode className="w-4 h-4" />
@@ -468,6 +480,13 @@ export default function AdminDashboardPage() {
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
         onCreated={loadData}
+      />
+
+      <EditAsesorModal
+        asesor={editingAsesor}
+        isOpen={Boolean(editingAsesor)}
+        onClose={() => setEditingAsesor(null)}
+        onUpdated={loadData}
       />
 
       <QuickQrModal

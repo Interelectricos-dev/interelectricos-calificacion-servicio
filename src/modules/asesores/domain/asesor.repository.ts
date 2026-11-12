@@ -6,5 +6,6 @@ export interface IAsesorRepository {
   findAll(includeInactive?: boolean): Promise<Asesor[]>;
   create(data: CreateAsesorDTO): Promise<Asesor>;
   updateActivo(id: string, activo: boolean): Promise<Asesor>;
+  update(id: string, data: { nombre: string; cargo?: string }): Promise<Asesor>;
 }
 
