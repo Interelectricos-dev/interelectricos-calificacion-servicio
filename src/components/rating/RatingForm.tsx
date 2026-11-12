@@ -8,6 +8,7 @@ import { ENV } from '@/config/env';
 
 interface RatingFormProps {
   asesorIdentifier: string;
+  isTestingMode?: boolean;
 }
 
 function getInitials(name: string): string {
@@ -17,7 +18,7 @@ function getInitials(name: string): string {
   return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
 }
 
-export function RatingForm({ asesorIdentifier }: RatingFormProps) {
+export function RatingForm({ asesorIdentifier, isTestingMode = false }: RatingFormProps) {
   const {
     asesor,
     isLoadingAsesor,
@@ -64,28 +65,26 @@ export function RatingForm({ asesorIdentifier }: RatingFormProps) {
   // 3. Estado: Calificación enviada con éxito
   if (submitted) {
     return (
-      <div className="min-h-[420px] flex flex-col items-center justify-center p-8 text-center animate-fadeIn">
-        <div className="w-20 h-20 bg-emerald-50 text-emerald-500 rounded-full flex items-center justify-center mb-5 shadow-inner">
-          <CheckCircle2 className="w-12 h-12 stroke-[2.2]" />
+      <div className="min-h-[380px] flex flex-col items-center justify-center p-8 text-center animate-fadeIn">
+        <div className="w-16 h-16 bg-emerald-50 text-emerald-500 rounded-full flex items-center justify-center mb-4 shadow-inner">
+          <CheckCircle2 className="w-10 h-10 stroke-[2.2]" />
         </div>
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">¡Muchas gracias!</h2>
-        <p className="text-gray-600 text-sm max-w-xs mb-6">
+        <h2 className="text-xl font-bold text-gray-900 mb-2">¡Muchas gracias!</h2>
+        <p className="text-gray-600 text-xs sm:text-sm max-w-xs leading-relaxed">
           Tu calificación ha sido registrada. Tu opinión nos ayuda a brindarte siempre el mejor servicio en {ENV.companyName}.
         </p>
-        <div className="w-full max-w-xs bg-slate-50 border border-slate-200/80 rounded-2xl p-4 text-xs text-slate-500 flex items-center justify-center gap-2 mb-4">
-          <span>Que tengas un excelente día</span>
-          <span>⚡</span>
-        </div>
 
-        {/* Botón para reiniciar prueba rápida */}
-        <button
-          type="button"
-          onClick={resetForTesting}
-          className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-slate-800 transition py-1.5 px-3 rounded-lg border border-dashed border-slate-300 hover:border-slate-400 bg-white"
-        >
-          <RotateCcw className="w-3.5 h-3.5 text-amber-500" />
-          <span>Volver a probar calificación</span>
-        </button>
+        {/* Solo visible en modo de prueba administrativo */}
+        {isTestingMode && (
+          <button
+            type="button"
+            onClick={resetForTesting}
+            className="mt-6 inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-slate-800 transition py-1.5 px-3 rounded-lg border border-dashed border-slate-300 hover:border-slate-400 bg-white"
+          >
+            <RotateCcw className="w-3.5 h-3.5 text-amber-500" />
+            <span>Volver a probar calificación</span>
+          </button>
+        )}
       </div>
     );
   }
@@ -129,15 +128,17 @@ export function RatingForm({ asesorIdentifier }: RatingFormProps) {
               <span>¡Muchas gracias por tu visita!</span>
             </div>
 
-            {/* Desbloqueo rápido para modo prueba */}
-            <button
-              type="button"
-              onClick={resetForTesting}
-              className="mt-3 inline-flex items-center gap-1.5 text-xs font-semibold text-slate-600 hover:text-slate-900 transition py-1.5 px-3 rounded-xl border border-dashed border-slate-300 hover:border-slate-400 bg-white shadow-2xs"
-            >
-              <RotateCcw className="w-3.5 h-3.5 text-amber-500" />
-              <span>Desbloquear para probar de nuevo</span>
-            </button>
+            {/* Solo visible en modo de prueba administrativo */}
+            {isTestingMode && (
+              <button
+                type="button"
+                onClick={resetForTesting}
+                className="mt-3 inline-flex items-center gap-1.5 text-xs font-semibold text-slate-600 hover:text-slate-900 transition py-1.5 px-3 rounded-xl border border-dashed border-slate-300 hover:border-slate-400 bg-white shadow-2xs"
+              >
+                <RotateCcw className="w-3.5 h-3.5 text-amber-500" />
+                <span>Desbloquear para probar de nuevo</span>
+              </button>
+            )}
           </div>
         ) : (
           <>

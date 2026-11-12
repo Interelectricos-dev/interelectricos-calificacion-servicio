@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { QRCodeSVG } from 'qrcode.react';
 import { Asesor } from '@/modules/asesores';
-import { X, Printer, ExternalLink, Layers } from 'lucide-react';
+import { X, Printer, ExternalLink } from 'lucide-react';
 import { ENV } from '@/config/env';
 
 interface QuickQrModalProps {
@@ -24,6 +24,7 @@ export function QuickQrModal({ asesor, onClose }: QuickQrModalProps) {
   if (!asesor) return null;
 
   const url = `${origin}/calificar?asesor=${encodeURIComponent(asesor.codigoSlug)}`;
+  const testUrl = `${origin}/calificar?asesor=${encodeURIComponent(asesor.codigoSlug)}&mode=test`;
 
   const handlePrint = () => {
     window.print();
@@ -73,33 +74,23 @@ export function QuickQrModal({ asesor, onClose }: QuickQrModalProps) {
         </div>
 
         {/* Botones de Acción (Ocultos al imprimir) */}
-        <div className="w-full flex flex-col gap-2 mt-5 print:hidden">
-          <div className="flex items-center gap-2">
-            <a
-              href={url}
-              target="_blank"
-              rel="noreferrer"
-              className="flex-1 py-2.5 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs transition flex items-center justify-center gap-1.5"
-            >
-              <ExternalLink className="w-3.5 h-3.5" />
-              <span>Probar Formulario</span>
-            </a>
-            <button
-              onClick={handlePrint}
-              className="flex-1 py-2.5 px-3 rounded-xl bg-[#f2e205] hover:bg-[#dfd003] text-slate-900 font-bold text-xs transition flex items-center justify-center gap-1.5 shadow-sm cursor-pointer"
-            >
-              <Printer className="w-3.5 h-3.5" />
-              <span>Imprimir Ficha</span>
-            </button>
-          </div>
-
-          <Link
-            href="/admin/qr"
-            className="text-[11px] font-bold text-slate-500 hover:text-slate-900 flex items-center justify-center gap-1 py-1"
+        <div className="w-full flex items-center gap-2 mt-5 print:hidden">
+          <a
+            href={testUrl}
+            target="_blank"
+            rel="noreferrer"
+            className="flex-1 py-2.5 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs transition flex items-center justify-center gap-1.5"
           >
-            <Layers className="w-3.5 h-3.5 text-blue-600" />
-            <span>Abrir generador múltiple (2 o 4 por hoja)</span>
-          </Link>
+            <ExternalLink className="w-3.5 h-3.5" />
+            <span>Probar Formulario</span>
+          </a>
+          <button
+            onClick={handlePrint}
+            className="flex-1 py-2.5 px-3 rounded-xl bg-[#f2e205] hover:bg-[#dfd003] text-slate-900 font-bold text-xs transition flex items-center justify-center gap-1.5 shadow-sm cursor-pointer"
+          >
+            <Printer className="w-3.5 h-3.5" />
+            <span>Imprimir Ficha</span>
+          </button>
         </div>
       </div>
     </div>

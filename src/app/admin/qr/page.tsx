@@ -6,7 +6,7 @@ import { QRCodeSVG } from 'qrcode.react';
 import { Asesor, asesorService } from '@/modules/asesores';
 import { adminAuthService } from '@/modules/auth/auth.service';
 import { AdminLoginForm } from '@/components/admin/AdminLoginForm';
-import { ArrowLeft, Printer, CheckSquare, Square, Layers } from 'lucide-react';
+import { ArrowLeft, Printer, Layers, Users, CheckSquare, Square } from 'lucide-react';
 import { ENV } from '@/config/env';
 
 type LayoutMode = 'vertical-2' | 'horizontal-2' | 'grid-4';
@@ -15,7 +15,7 @@ export default function GeneradorQRPage() {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const [asesores, setAsesores] = useState<Asesor[]>([]);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
-  const [layoutMode, setLayoutMode] = useState<LayoutMode>('vertical-2'); // Por defecto vertical 2 por hoja (arriba y abajo)
+  const [layoutMode, setLayoutMode] = useState<LayoutMode>('vertical-2');
   const [baseUrl, setBaseUrl] = useState('');
   const [, startTransition] = useTransition();
 
@@ -39,7 +39,7 @@ export default function GeneradorQRPage() {
   }, [isAuthenticated]);
 
   if (isAuthenticated === null) {
-    return <div className="min-h-screen bg-slate-900" />;
+    return <div className="min-h-screen bg-slate-950" />;
   }
 
   if (!isAuthenticated) {
@@ -67,122 +67,112 @@ export default function GeneradorQRPage() {
   const asesoresToPrint = asesores.filter((a) => selectedIds.includes(a.id));
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-800 p-4 sm:p-8 print:p-0 print:bg-white">
-      {/* Barra superior de controles (Oculta al imprimir) */}
+    <div className="min-h-screen bg-slate-50 text-slate-800 p-4 sm:p-8 print:p-0 print:bg-white font-sans">
+      {/* Controles y Filtros (Ocultos al imprimir) */}
       <div className="max-w-5xl mx-auto mb-8 print:hidden">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-200">
+        {/* Barra superior de navegación */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-slate-200">
           <Link
             href="/"
-            className="flex items-center gap-2 text-xs font-bold text-slate-600 hover:text-slate-900 transition"
+            className="inline-flex items-center gap-2 text-xs font-bold text-slate-600 hover:text-slate-900 transition"
           >
             <ArrowLeft className="w-4 h-4" />
             <span>Volver al Dashboard</span>
           </Link>
 
-          <div className="flex flex-wrap items-center gap-3">
-            {/* Selector de Orientación y Formato */}
-            <div className="flex items-center bg-white border border-slate-200 rounded-xl p-1 text-xs">
-              <span className="text-[11px] font-bold text-slate-400 px-2 flex items-center gap-1">
-                <Layers className="w-3.5 h-3.5" />
-                <span>Diseño de hoja:</span>
-              </span>
+          <button
+            onClick={handlePrint}
+            disabled={asesoresToPrint.length === 0}
+            className={`px-5 py-2.5 text-xs font-black rounded-xl flex items-center justify-center gap-2 shadow-xs transition ${
+              asesoresToPrint.length === 0
+                ? 'bg-slate-200 text-slate-400 cursor-not-allowed'
+                : 'bg-[#f2e205] hover:bg-[#e5d604] active:scale-[0.99] text-slate-950 cursor-pointer shadow-sm'
+            }`}
+          >
+            <Printer className="w-4 h-4" />
+            <span>Imprimir {asesoresToPrint.length} Ficha{asesoresToPrint.length !== 1 ? 's' : ''}</span>
+          </button>
+        </div>
 
+        {/* Panel de Configuración de Fichas (Selects de Asesores y Diseño) */}
+        <div className="bg-white rounded-2xl p-5 border border-slate-200/90 shadow-xs mt-5 flex flex-col md:flex-row gap-5">
+          {/* Select 1: Diseño de Impresión */}
+          <div className="flex-1 flex flex-col gap-1.5">
+            <label htmlFor="select-layout" className="text-xs font-bold uppercase tracking-wider text-slate-600 flex items-center gap-1.5">
+              <Layers className="w-3.5 h-3.5 text-slate-500" />
+              <span>Diseño de Hoja</span>
+            </label>
+            <select
+              id="select-layout"
+              value={layoutMode}
+              onChange={(e) => setLayoutMode(e.target.value as LayoutMode)}
+              className="w-full bg-slate-50 border border-slate-200 text-slate-900 text-xs font-semibold rounded-xl py-2.5 px-3 focus:outline-none focus:ring-2 focus:ring-[#f2e205] focus:border-slate-900 cursor-pointer"
+            >
+              <option value="vertical-2">Hoja Vertical (2 grandes — Recomendado)</option>
+              <option value="horizontal-2">Hoja Horizontal (2 lado a lado)</option>
+              <option value="grid-4">4 por hoja (2x2 para adhesivos o soportes chicos)</option>
+            </select>
+            <p className="text-[11px] text-slate-400">
+              {layoutMode === 'vertical-2' && 'Formato estándar carta vertical con 2 fichas de 145mm x 145mm centradas.'}
+              {layoutMode === 'horizontal-2' && 'Formato apaisado con 2 fichas de 125mm x 125mm colocadas lado a lado.'}
+              {layoutMode === 'grid-4' && 'Cuadrícula compacta de 4 fichas pequeñas de 88mm x 88mm por página.'}
+            </p>
+          </div>
+
+          {/* Selector 2: Filtro y Selección de Asesores */}
+          <div className="flex-1 flex flex-col gap-1.5">
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-bold uppercase tracking-wider text-slate-600 flex items-center gap-1.5">
+                <Users className="w-3.5 h-3.5 text-slate-500" />
+                <span>Asesores a Imprimir</span>
+              </label>
               <button
                 type="button"
-                onClick={() => setLayoutMode('vertical-2')}
-                className={`px-3 py-1.5 rounded-lg font-bold transition cursor-pointer ${
-                  layoutMode === 'vertical-2'
-                    ? 'bg-slate-900 text-[#f2e205] shadow-xs'
-                    : 'text-slate-600 hover:bg-slate-100'
-                }`}
-                title="Hoja Vertical estándar: coloca 2 fichas grandes (una arriba y otra abajo)"
+                onClick={handleSelectAll}
+                className="text-[11px] font-bold text-slate-600 hover:text-slate-900 flex items-center gap-1 cursor-pointer"
               >
-                Hoja Vertical (2 grandes)
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setLayoutMode('horizontal-2')}
-                className={`px-3 py-1.5 rounded-lg font-bold transition cursor-pointer ${
-                  layoutMode === 'horizontal-2'
-                    ? 'bg-slate-900 text-[#f2e205] shadow-xs'
-                    : 'text-slate-600 hover:bg-slate-100'
-                }`}
-                title="Hoja Apaisada: coloca 2 fichas lado a lado"
-              >
-                Hoja Horizontal (2 lado a lado)
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setLayoutMode('grid-4')}
-                className={`px-3 py-1.5 rounded-lg font-bold transition cursor-pointer ${
-                  layoutMode === 'grid-4'
-                    ? 'bg-slate-900 text-[#f2e205] shadow-xs'
-                    : 'text-slate-600 hover:bg-slate-100'
-                }`}
-                title="Cuadrícula 2x2 para soportes pequeños o adhesivos"
-              >
-                4 por hoja (2x2)
+                {selectedIds.length === asesores.length ? (
+                  <>
+                    <CheckSquare className="w-3.5 h-3.5 text-slate-900" />
+                    <span>Deseleccionar todos</span>
+                  </>
+                ) : (
+                  <>
+                    <Square className="w-3.5 h-3.5 text-slate-400" />
+                    <span>Seleccionar todos</span>
+                  </>
+                )}
               </button>
             </div>
 
-            {/* Botón de Imprimir */}
-            <button
-              onClick={handlePrint}
-              disabled={asesoresToPrint.length === 0}
-              className={`px-5 py-2.5 text-xs font-bold rounded-xl flex items-center gap-2 shadow-sm transition ${
-                asesoresToPrint.length === 0
-                  ? 'bg-slate-200 text-slate-400 cursor-not-allowed'
-                  : 'bg-[#f2e205] hover:bg-[#dfd003] active:scale-[0.99] text-slate-900 cursor-pointer'
-              }`}
-            >
-              <Printer className="w-4 h-4" />
-              <span>Imprimir {asesoresToPrint.length} Ficha{asesoresToPrint.length !== 1 ? 's' : ''}</span>
-            </button>
-          </div>
-        </div>
-
-        {/* Panel de Selección de Asesores */}
-        <div className="bg-white rounded-2xl p-4 border border-slate-200 shadow-xs mt-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <button
-              type="button"
-              onClick={handleSelectAll}
-              className="flex items-center gap-2 text-xs font-bold text-slate-700 hover:text-slate-900 cursor-pointer"
-            >
-              {selectedIds.length === asesores.length ? (
-                <CheckSquare className="w-4 h-4 text-slate-900" />
+            {/* Selector Múltiple / Botones de Asesores */}
+            <div className="min-h-[42px] max-h-36 overflow-y-auto bg-slate-50 border border-slate-200 rounded-xl p-2 flex flex-wrap gap-1.5">
+              {asesores.length === 0 ? (
+                <span className="text-xs text-slate-400 p-1">No hay asesores registrados.</span>
               ) : (
-                <Square className="w-4 h-4 text-slate-400" />
+                asesores.map((a) => {
+                  const isChecked = selectedIds.includes(a.id);
+                  return (
+                    <button
+                      key={a.id}
+                      type="button"
+                      onClick={() => handleToggleSelect(a.id)}
+                      className={`text-xs px-2.5 py-1 rounded-lg border font-medium flex items-center gap-1.5 transition cursor-pointer ${
+                        isChecked
+                          ? 'bg-[#f2e205] border-[#dfd003] text-slate-950 font-bold shadow-2xs'
+                          : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-100'
+                      }`}
+                    >
+                      <span className={`w-1.5 h-1.5 rounded-full ${isChecked ? 'bg-slate-950' : 'bg-slate-300'}`} />
+                      <span>{a.nombre}</span>
+                    </button>
+                  );
+                })
               )}
-              <span>
-                {selectedIds.length === asesores.length ? 'Deseleccionar todos' : 'Seleccionar todos los asesores'}
-              </span>
-            </button>
-            <span className="text-xs text-slate-400">
-              ({selectedIds.length} de {asesores.length} seleccionados)
-            </span>
-          </div>
-
-          <div className="flex flex-wrap gap-2">
-            {asesores.map((a) => {
-              const isChecked = selectedIds.includes(a.id);
-              return (
-                <button
-                  key={a.id}
-                  onClick={() => handleToggleSelect(a.id)}
-                  className={`text-xs px-3 py-1.5 rounded-xl border font-medium flex items-center gap-1.5 transition cursor-pointer ${
-                    isChecked
-                      ? 'bg-yellow-50 border-yellow-400 text-slate-900 font-bold'
-                      : 'bg-white border-slate-200 text-slate-500 hover:bg-slate-50'
-                  }`}
-                >
-                  <span className={`w-2 h-2 rounded-full ${isChecked ? 'bg-[#f2e205]' : 'bg-slate-300'}`} />
-                  <span>{a.nombre}</span>
-                </button>
-              );
-            })}
+            </div>
+            <p className="text-[11px] text-slate-400">
+              {selectedIds.length} de {asesores.length} asesores seleccionados para impresión.
+            </p>
           </div>
         </div>
       </div>
@@ -190,18 +180,19 @@ export default function GeneradorQRPage() {
       {/* ÁREA DE IMPRESIÓN Y VISTA PREVIA */}
       <div className="max-w-5xl mx-auto print:max-w-none">
         {asesoresToPrint.length === 0 ? (
-          <div className="text-center py-12 text-slate-400 print:hidden bg-white rounded-3xl border border-slate-200">
-            <p className="text-sm font-semibold">No has seleccionado ningún asesor para imprimir.</p>
-            <p className="text-xs text-slate-400 mt-1">Marca las casillas superiores para generar las fichas.</p>
+          <div className="text-center py-16 text-slate-400 print:hidden bg-white rounded-3xl border border-slate-200">
+            <Users className="w-10 h-10 mx-auto text-slate-300 mb-2" />
+            <p className="text-sm font-bold text-slate-700">Ningún asesor seleccionado</p>
+            <p className="text-xs text-slate-400 mt-1">Selecciona uno o más asesores arriba para generar las fichas.</p>
           </div>
         ) : (
           <div
             className={`grid gap-8 print:gap-4 ${
               layoutMode === 'vertical-2'
-                ? 'grid-cols-1 md:grid-cols-2 print:grid-cols-1' // En print vertical: 1 columna centrada
+                ? 'grid-cols-1 md:grid-cols-2 print:grid-cols-1'
                 : layoutMode === 'horizontal-2'
-                ? 'grid-cols-1 md:grid-cols-2 print:grid-cols-2' // En print horizontal: 2 columnas
-                : 'grid-cols-1 sm:grid-cols-2 md:grid-cols-4 print:grid-cols-2' // Cuadrícula 2x2
+                ? 'grid-cols-1 md:grid-cols-2 print:grid-cols-2'
+                : 'grid-cols-1 sm:grid-cols-2 md:grid-cols-4 print:grid-cols-2'
             }`}
           >
             {asesoresToPrint.map((asesor) => {
@@ -251,7 +242,7 @@ export default function GeneradorQRPage() {
                       </span>
                     </div>
 
-                    {/* 3. Nombre y Cargo al Pie con fondo suave y separación */}
+                    {/* 3. Nombre y Cargo al Pie */}
                     <div className="w-full bg-slate-50 rounded-2xl py-2 px-3 border border-slate-100 text-center">
                       <p className={`font-black text-slate-900 tracking-tight leading-tight ${layoutMode === 'grid-4' ? 'text-xs' : 'text-sm sm:text-base'}`}>
                         {asesor.nombre}

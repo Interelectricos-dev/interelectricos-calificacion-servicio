@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState, useTransition } from 'react';
+import React, { useEffect, useState, useTransition, useMemo } from 'react';
 import Link from 'next/link';
 import { Asesor, asesorService } from '@/modules/asesores';
 import { Calificacion, calificacionService } from '@/modules/calificaciones';
@@ -21,12 +21,11 @@ import {
   XCircle,
   MessageSquare,
   Download,
-  Calendar,
-  Sparkles,
   ExternalLink,
-  ShieldCheck,
   TrendingUp,
   Pencil,
+  Search,
+  Filter,
 } from 'lucide-react';
 
 export default function AdminDashboardPage() {
@@ -39,6 +38,14 @@ export default function AdminDashboardPage() {
   const [qrModalAsesor, setQrModalAsesor] = useState<Asesor | null>(null);
   const [, startTransition] = useTransition();
 
+  // Estados de Búsqueda y Filtro para Asesores
+  const [searchAsesor, setSearchAsesor] = useState('');
+  const [filterEstadoAsesor, setFilterEstadoAsesor] = useState<'todos' | 'activos' | 'inactivos'>('todos');
+
+  // Estados de Búsqueda y Filtro para Buzón
+  const [searchComentario, setSearchComentario] = useState('');
+  const [filterRayosComentario, setFilterRayosComentario] = useState<'todos' | '5' | '4' | '3' | '2' | '1'>('todos');
+
   const isDbLive = isSupabaseConfigured();
 
   // Verificar sesión
@@ -50,7 +57,7 @@ export default function AdminDashboardPage() {
   const loadData = () => {
     startTransition(async () => {
       const [asesoresData, calificacionesData] = await Promise.all([
-        asesorService.getAllAsesores(true), // Incluir inactivos para auditoría
+        asesorService.getAllAsesores(true),
         calificacionService.getAllCalificaciones(),
       ]);
       setAsesores(asesoresData);
@@ -115,18 +122,66 @@ export default function AdminDashboardPage() {
     document.body.removeChild(link);
   };
 
+  // Cálculos de métricas
+  const metricasGenerales: ResumenMetricas = useMemo(
+    () => metricasService.calcularResumenGeneral(calificaciones),
+    [calificaciones]
+  );
+  const metricasAsesores: MetricasAsesor[] = useMemo(
+    () => metricasService.agruparPorAsesor(asesores, calificaciones),
+    [asesores, calificaciones]
+  );
+  const asesoresActivosCount = useMemo(
+    () => asesores.filter((a) => a.activo).length,
+    [asesores]
+  );
+
+  // Filtrado de Asesores por búsqueda y estado
+  const filteredMetricasAsesores = useMemo(() => {
+    return metricasAsesores.filter(({ asesor }) => {
+      const matchesSearch =
+        asesor.nombre.toLowerCase().includes(searchAsesor.toLowerCase()) ||
+        (asesor.cargo && asesor.cargo.toLowerCase().includes(searchAsesor.toLowerCase())) ||
+        asesor.codigoSlug.toLowerCase().includes(searchAsesor.toLowerCase());
+
+      const matchesStatus =
+        filterEstadoAsesor === 'todos'
+          ? true
+          : filterEstadoAsesor === 'activos'
+          ? asesor.activo
+          : !asesor.activo;
+
+      return matchesSearch && matchesStatus;
+    });
+  }, [metricasAsesores, searchAsesor, filterEstadoAsesor]);
+
+  // Filtrado de Comentarios del Buzón por búsqueda y estrellas
+  const filteredCalificaciones = useMemo(() => {
+    return calificaciones.filter((c) => {
+      const asesor = asesores.find((a) => a.id === c.asesorId);
+      const asesorNombre = asesor ? asesor.nombre.toLowerCase() : '';
+      const textoComentario = (c.comentario || '').toLowerCase();
+      const query = searchComentario.toLowerCase();
+
+      const matchesSearch =
+        asesorNombre.includes(query) || textoComentario.includes(query);
+
+      const matchesEstrellas =
+        filterRayosComentario === 'todos'
+          ? true
+          : c.estrellas === parseInt(filterRayosComentario, 10);
+
+      return matchesSearch && matchesEstrellas;
+    });
+  }, [calificaciones, asesores, searchComentario, filterRayosComentario]);
+
   if (isAuthenticated === null) {
-    return <div className="min-h-screen bg-slate-900" />;
+    return <div className="min-h-screen bg-slate-950" />;
   }
 
   if (!isAuthenticated) {
     return <AdminLoginForm onSuccess={() => setIsAuthenticated(true)} />;
   }
-
-  // Cálculos de métricas
-  const metricasGenerales: ResumenMetricas = metricasService.calcularResumenGeneral(calificaciones);
-  const metricasAsesores: MetricasAsesor[] = metricasService.agruparPorAsesor(asesores, calificaciones);
-  const asesoresActivosCount = asesores.filter((a) => a.activo).length;
 
   return (
     <div className="min-h-screen bg-slate-100/70 text-slate-900 flex flex-col font-sans">
@@ -134,14 +189,16 @@ export default function AdminDashboardPage() {
       <header className="bg-slate-950 text-white sticky top-0 z-30 shadow-md border-b border-slate-800 print:hidden">
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
           <div className="h-16 flex items-center justify-between gap-4">
-            {/* Logo e Identidad */}
+            {/* Logo e Identidad (Contenedor blanco nítido para que el logo destaque perfecto) */}
             <div className="flex items-center gap-3">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src="/images/logo-interelectricos.png"
-                alt={ENV.companyName}
-                className="h-8 w-auto object-contain brightness-0 invert"
-              />
+              <div className="bg-white px-2 py-1 rounded-lg flex items-center justify-center shadow-xs">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src="/images/logo-interelectricos.png"
+                  alt={ENV.companyName}
+                  className="h-6 w-auto object-contain"
+                />
+              </div>
               <div className="hidden md:block h-5 w-px bg-slate-800" />
               <div className="hidden md:flex flex-col">
                 <span className="text-xs font-bold tracking-tight text-white leading-none">
@@ -153,17 +210,17 @@ export default function AdminDashboardPage() {
               </div>
             </div>
 
-            {/* Navegación de Vistas (Tabs) para Pantallas Medianas y Grandes */}
-            <nav className="hidden sm:flex items-center gap-1 bg-slate-900/90 p-1 rounded-xl border border-slate-800">
+            {/* Menú de 3 Opciones Pegadas y Más Grandes (Asesores, Buzón, Fichas QR) */}
+            <nav className="hidden sm:flex items-center bg-slate-900 p-1 rounded-xl border border-slate-800">
               <button
                 onClick={() => setActiveTab('asesores')}
-                className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-2 cursor-pointer ${
+                className={`px-4 py-2 rounded-lg text-xs font-black transition flex items-center gap-2 cursor-pointer ${
                   activeTab === 'asesores'
                     ? 'bg-[#f2e205] text-slate-950 shadow-xs'
-                    : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+                    : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
                 }`}
               >
-                <Users className="w-3.5 h-3.5" />
+                <Users className="w-4 h-4" />
                 <span>Asesores</span>
                 <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono ${
                   activeTab === 'asesores' ? 'bg-slate-950/15 text-slate-950' : 'bg-slate-800 text-slate-400'
@@ -174,13 +231,13 @@ export default function AdminDashboardPage() {
 
               <button
                 onClick={() => setActiveTab('comentarios')}
-                className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-2 cursor-pointer ${
+                className={`px-4 py-2 rounded-lg text-xs font-black transition flex items-center gap-2 cursor-pointer ${
                   activeTab === 'comentarios'
                     ? 'bg-[#f2e205] text-slate-950 shadow-xs'
-                    : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+                    : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
                 }`}
               >
-                <MessageSquare className="w-3.5 h-3.5" />
+                <MessageSquare className="w-4 h-4" />
                 <span>Buzón</span>
                 <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono ${
                   activeTab === 'comentarios' ? 'bg-slate-950/15 text-slate-950' : 'bg-slate-800 text-slate-400'
@@ -188,30 +245,26 @@ export default function AdminDashboardPage() {
                   {calificaciones.length}
                 </span>
               </button>
-            </nav>
 
-            {/* Acciones del Header */}
-            <div className="flex items-center gap-2">
-              {/* Badge de Conexión */}
-              <span
-                className={`hidden lg:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-medium border ${
-                  isDbLive
-                    ? 'bg-emerald-950/50 text-emerald-400 border-emerald-800/60'
-                    : 'bg-amber-950/50 text-amber-300 border-amber-800/60'
-                }`}
-              >
-                <span className={`w-1.5 h-1.5 rounded-full ${isDbLive ? 'bg-emerald-400' : 'bg-amber-400 animate-pulse'}`} />
-                <span>{isDbLive ? 'Supabase Conectado' : 'Modo Demo'}</span>
-              </span>
-
-              {/* Enlace Fichas QR */}
               <Link
                 href="/admin/qr"
-                className="px-3 py-1.5 bg-slate-900 hover:bg-slate-850 active:scale-95 text-slate-200 hover:text-white text-xs font-semibold rounded-xl border border-slate-800 flex items-center gap-1.5 transition"
+                className="px-4 py-2 rounded-lg text-xs font-black transition flex items-center gap-2 text-slate-300 hover:text-white hover:bg-slate-800/60 cursor-pointer"
               >
-                <QrCode className="w-3.5 h-3.5 text-[#f2e205]" />
-                <span className="hidden sm:inline">Fichas QR</span>
+                <QrCode className="w-4 h-4 text-[#f2e205]" />
+                <span>Fichas QR</span>
               </Link>
+            </nav>
+
+            {/* Acciones Derecha (Punto verde Supabase simple y Salir) */}
+            <div className="flex items-center gap-3">
+              {/* Indicador Simple de Supabase */}
+              <div
+                className="hidden lg:flex items-center gap-2 text-xs text-slate-400 font-medium"
+                title={isDbLive ? 'Supabase conectado' : 'Modo demostración'}
+              >
+                <span className={`w-2 h-2 rounded-full ${isDbLive ? 'bg-emerald-400 shadow-xs shadow-emerald-400/50' : 'bg-amber-400'}`} />
+                <span>Supabase</span>
+              </div>
 
               {/* Botón Salir */}
               <button
@@ -225,13 +278,13 @@ export default function AdminDashboardPage() {
             </div>
           </div>
 
-          {/* Navegación móvil inferior (aparece en pantallas pequeñas) */}
-          <div className="flex sm:hidden items-center justify-around py-2 border-t border-slate-850 gap-2">
+          {/* Menú Móvil Inferior con las 3 opciones pegadas */}
+          <div className="flex sm:hidden items-center justify-around py-2 border-t border-slate-850 gap-1">
             <button
               onClick={() => setActiveTab('asesores')}
-              className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 ${
+              className={`flex-1 py-2 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 ${
                 activeTab === 'asesores'
-                  ? 'bg-[#f2e205] text-slate-950'
+                  ? 'bg-[#f2e205] text-slate-950 font-black'
                   : 'text-slate-400 hover:text-white'
               }`}
             >
@@ -240,15 +293,22 @@ export default function AdminDashboardPage() {
             </button>
             <button
               onClick={() => setActiveTab('comentarios')}
-              className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 ${
+              className={`flex-1 py-2 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 ${
                 activeTab === 'comentarios'
-                  ? 'bg-[#f2e205] text-slate-950'
+                  ? 'bg-[#f2e205] text-slate-950 font-black'
                   : 'text-slate-400 hover:text-white'
               }`}
             >
               <MessageSquare className="w-3.5 h-3.5" />
               <span>Buzón ({calificaciones.length})</span>
             </button>
+            <Link
+              href="/admin/qr"
+              className="flex-1 py-2 rounded-lg text-xs font-bold text-slate-400 hover:text-white flex items-center justify-center gap-1.5"
+            >
+              <QrCode className="w-3.5 h-3.5 text-[#f2e205]" />
+              <span>Fichas QR</span>
+            </Link>
           </div>
         </div>
       </header>
@@ -324,59 +384,115 @@ export default function AdminDashboardPage() {
           </div>
         </section>
 
-        {/* Barra de Título de Sección y Botón de Acción Principal */}
-        <div className="flex items-center justify-between gap-4 mb-4">
-          <div>
-            <h2 className="text-lg sm:text-xl font-bold text-slate-900 tracking-tight">
-              {activeTab === 'asesores' ? 'Equipo de Mostrador' : 'Buzón de Opiniones'}
-            </h2>
-            <p className="text-xs text-slate-500 mt-0.5">
-              {activeTab === 'asesores'
-                ? 'Monitorea el desempeño individual, códigos QR y estado de cada asesor.'
-                : 'Historial detallado de comentarios y valoraciones recibidas en tiempo real.'}
-            </p>
+        {/* Barra de Título de Sección, Búsqueda, Filtro y Botón Principal */}
+        <div className="flex flex-col gap-3 mb-4">
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <h2 className="text-lg sm:text-xl font-bold text-slate-900 tracking-tight">
+                {activeTab === 'asesores' ? 'Equipo de Mostrador' : 'Buzón de Opiniones'}
+              </h2>
+              <p className="text-xs text-slate-500 mt-0.5">
+                {activeTab === 'asesores'
+                  ? 'Monitorea el desempeño individual, códigos QR y estado de cada asesor.'
+                  : 'Historial detallado de comentarios y valoraciones recibidas en tiempo real.'}
+              </p>
+            </div>
+
+            <div>
+              {activeTab === 'asesores' ? (
+                <button
+                  onClick={() => setIsCreateModalOpen(true)}
+                  className="px-3.5 sm:px-4 py-2 sm:py-2.5 bg-[#f2e205] hover:bg-[#e5d604] active:scale-95 text-slate-950 text-xs font-black rounded-xl flex items-center gap-1.5 transition shadow-xs cursor-pointer"
+                >
+                  <UserPlus className="w-4 h-4" />
+                  <span className="hidden sm:inline">Nuevo Asesor</span>
+                  <span className="sm:hidden">Nuevo</span>
+                </button>
+              ) : (
+                <button
+                  onClick={handleExportCSV}
+                  className="px-3.5 sm:px-4 py-2 sm:py-2.5 bg-slate-900 hover:bg-slate-800 active:scale-95 text-white text-xs font-bold rounded-xl flex items-center gap-1.5 transition shadow-xs cursor-pointer"
+                >
+                  <Download className="w-4 h-4 text-[#f2e205]" />
+                  <span className="hidden sm:inline">Exportar CSV</span>
+                  <span className="sm:hidden">Exportar</span>
+                </button>
+              )}
+            </div>
           </div>
 
-          <div>
-            {activeTab === 'asesores' ? (
-              <button
-                onClick={() => setIsCreateModalOpen(true)}
-                className="px-3.5 sm:px-4 py-2 sm:py-2.5 bg-[#f2e205] hover:bg-[#e5d604] active:scale-95 text-slate-950 text-xs font-black rounded-xl flex items-center gap-1.5 transition shadow-xs cursor-pointer"
-              >
-                <UserPlus className="w-4 h-4" />
-                <span className="hidden sm:inline">Nuevo Asesor</span>
-                <span className="sm:hidden">Nuevo</span>
-              </button>
-            ) : (
-              <button
-                onClick={handleExportCSV}
-                className="px-3.5 sm:px-4 py-2 sm:py-2.5 bg-slate-900 hover:bg-slate-800 active:scale-95 text-white text-xs font-bold rounded-xl flex items-center gap-1.5 transition shadow-xs cursor-pointer"
-              >
-                <Download className="w-4 h-4 text-[#f2e205]" />
-                <span className="hidden sm:inline">Exportar CSV</span>
-                <span className="sm:hidden">Exportar</span>
-              </button>
-            )}
+          {/* Barra de Búsqueda y Combo Select de Filtrado */}
+          <div className="bg-white p-3 rounded-2xl border border-slate-200/90 shadow-2xs flex flex-col sm:flex-row items-center gap-2.5">
+            {/* Input de Búsqueda */}
+            <div className="relative flex-1 w-full">
+              <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <input
+                type="text"
+                value={activeTab === 'asesores' ? searchAsesor : searchComentario}
+                onChange={(e) =>
+                  activeTab === 'asesores'
+                    ? setSearchAsesor(e.target.value)
+                    : setSearchComentario(e.target.value)
+                }
+                placeholder={
+                  activeTab === 'asesores'
+                    ? 'Buscar asesor por nombre, cargo o código...'
+                    : 'Buscar en comentarios o por nombre de asesor...'
+                }
+                className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-9 pr-4 py-2 text-xs text-slate-800 placeholder-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#f2e205] focus:border-slate-900 transition"
+              />
+            </div>
+
+            {/* Select de Filtrado */}
+            <div className="flex items-center gap-2 w-full sm:w-auto">
+              <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 w-full sm:w-auto">
+                <Filter className="w-3.5 h-3.5 text-slate-400" />
+                <span className="text-[11px] font-bold text-slate-500 whitespace-nowrap">Filtrar:</span>
+                {activeTab === 'asesores' ? (
+                  <select
+                    value={filterEstadoAsesor}
+                    onChange={(e) =>
+                      setFilterEstadoAsesor(e.target.value as 'todos' | 'activos' | 'inactivos')
+                    }
+                    className="bg-transparent text-xs font-semibold text-slate-800 focus:outline-none cursor-pointer"
+                  >
+                    <option value="todos">Todos los estados</option>
+                    <option value="activos">Solo activos</option>
+                    <option value="inactivos">Solo dados de baja</option>
+                  </select>
+                ) : (
+                  <select
+                    value={filterRayosComentario}
+                    onChange={(e) =>
+                      setFilterRayosComentario(e.target.value as 'todos' | '5' | '4' | '3' | '2' | '1')
+                    }
+                    className="bg-transparent text-xs font-semibold text-slate-800 focus:outline-none cursor-pointer"
+                  >
+                    <option value="todos">Todas las calificaciones</option>
+                    <option value="5">⚡ 5 Rayos (Excelente)</option>
+                    <option value="4">⚡ 4 Rayos (Muy bueno)</option>
+                    <option value="3">⚡ 3 Rayos (Bueno)</option>
+                    <option value="2">⚡ 2 Rayos (Regular)</option>
+                    <option value="1">⚡ 1 Rayo (Malo)</option>
+                  </select>
+                )}
+              </div>
+            </div>
           </div>
         </div>
 
         {/* Contenido Pestaña 1: Asesores */}
         {activeTab === 'asesores' && (
           <div className="bg-white rounded-2xl border border-slate-200/90 shadow-xs overflow-hidden">
-            {asesores.length === 0 ? (
+            {filteredMetricasAsesores.length === 0 ? (
               <div className="py-16 text-center text-slate-400 px-4">
                 <Users className="w-12 h-12 mx-auto text-slate-300 mb-3" />
-                <p className="text-sm font-bold text-slate-700">No hay asesores registrados aún</p>
+                <p className="text-sm font-bold text-slate-700">No se encontraron asesores</p>
                 <p className="text-xs text-slate-400 mt-1 max-w-sm mx-auto">
-                  Agrega al primer asesor para generar automáticamente su código QR y comenzar a registrar calificaciones.
+                  {searchAsesor || filterEstadoAsesor !== 'todos'
+                    ? 'No hay asesores que coincidan con la búsqueda o el filtro seleccionado.'
+                    : 'Agrega al primer asesor para generar su código QR y registrar calificaciones.'}
                 </p>
-                <button
-                  onClick={() => setIsCreateModalOpen(true)}
-                  className="mt-4 px-4 py-2 bg-[#f2e205] hover:bg-[#e5d604] text-slate-950 text-xs font-black rounded-xl inline-flex items-center gap-1.5 transition cursor-pointer"
-                >
-                  <UserPlus className="w-4 h-4" />
-                  <span>Agregar Primer Asesor</span>
-                </button>
               </div>
             ) : (
               <>
@@ -393,7 +509,7 @@ export default function AdminDashboardPage() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
-                      {metricasAsesores.map(({ asesor, promedio, total }) => (
+                      {filteredMetricasAsesores.map(({ asesor, promedio, total }) => (
                         <tr
                           key={asesor.id}
                           className={`hover:bg-slate-50/70 transition ${!asesor.activo ? 'opacity-60 bg-slate-50/30' : ''}`}
@@ -470,10 +586,10 @@ export default function AdminDashboardPage() {
                               </button>
 
                               <Link
-                                href={`/calificar?asesor=${encodeURIComponent(asesor.codigoSlug)}`}
+                                href={`/calificar?asesor=${encodeURIComponent(asesor.codigoSlug)}&mode=test`}
                                 target="_blank"
                                 className="p-2 rounded-lg text-slate-600 hover:text-blue-600 hover:bg-blue-50 border border-slate-200 transition"
-                                title="Abrir Formulario Móvil"
+                                title="Probar Formulario Móvil (Modo Test)"
                               >
                                 <ExternalLink className="w-3.5 h-3.5" />
                               </Link>
@@ -498,7 +614,7 @@ export default function AdminDashboardPage() {
 
                 {/* Vista en Tarjetas Móviles (visible solo en móviles y tablets estrechas) */}
                 <div className="md:hidden divide-y divide-slate-100">
-                  {metricasAsesores.map(({ asesor, promedio, total }) => (
+                  {filteredMetricasAsesores.map(({ asesor, promedio, total }) => (
                     <div
                       key={asesor.id}
                       className={`p-4 flex flex-col gap-3 ${!asesor.activo ? 'opacity-65 bg-slate-50/40' : ''}`}
@@ -565,10 +681,10 @@ export default function AdminDashboardPage() {
                         </button>
 
                         <Link
-                          href={`/calificar?asesor=${encodeURIComponent(asesor.codigoSlug)}`}
+                          href={`/calificar?asesor=${encodeURIComponent(asesor.codigoSlug)}&mode=test`}
                           target="_blank"
                           className="py-2 px-3 rounded-xl bg-blue-50 text-blue-700 hover:bg-blue-100 text-xs font-semibold flex items-center justify-center transition"
-                          title="Probar vista cliente"
+                          title="Probar vista cliente (Modo Test)"
                         >
                           <ExternalLink className="w-3.5 h-3.5" />
                         </Link>
@@ -595,17 +711,19 @@ export default function AdminDashboardPage() {
         {/* Contenido Pestaña 2: Comentarios */}
         {activeTab === 'comentarios' && (
           <div className="bg-white rounded-2xl border border-slate-200/90 p-4 sm:p-6 shadow-xs">
-            {calificaciones.length === 0 ? (
+            {filteredCalificaciones.length === 0 ? (
               <div className="py-16 text-center text-slate-400">
                 <MessageSquare className="w-12 h-12 mx-auto text-slate-300 mb-3" />
-                <p className="text-sm font-bold text-slate-700">Aún no hay calificaciones registradas</p>
+                <p className="text-sm font-bold text-slate-700">No se encontraron opiniones</p>
                 <p className="text-xs text-slate-400 mt-1 max-w-sm mx-auto">
-                  Las opiniones enviadas por los clientes desde sus dispositivos móviles aparecerán aquí en tiempo real.
+                  {searchComentario || filterRayosComentario !== 'todos'
+                    ? 'No hay registros que coincidan con la búsqueda o el filtro de calificación.'
+                    : 'Las opiniones enviadas por los clientes aparecerán aquí en tiempo real.'}
                 </p>
               </div>
             ) : (
               <div className="flex flex-col divide-y divide-slate-100">
-                {calificaciones.map((c) => {
+                {filteredCalificaciones.map((c) => {
                   const asesor = asesores.find((a) => a.id === c.asesorId);
                   return (
                     <div key={c.id} className="py-4 first:pt-0 last:pb-0 flex flex-col gap-2.5">

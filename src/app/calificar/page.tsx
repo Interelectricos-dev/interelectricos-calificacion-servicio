@@ -11,8 +11,9 @@ function RatingContent() {
   const searchParams = useSearchParams();
   // Permite tanto "?asesor=carlos-mendez" como "?id=carlos-mendez"
   const asesorIdentifier = searchParams.get('asesor') || searchParams.get('id') || '';
+  const isTestingMode = searchParams.get('mode') === 'test';
 
-  return <RatingForm asesorIdentifier={asesorIdentifier} />;
+  return <RatingForm asesorIdentifier={asesorIdentifier} isTestingMode={isTestingMode} />;
 }
 
 export default function CalificarPage() {
