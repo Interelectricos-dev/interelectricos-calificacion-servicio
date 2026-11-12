@@ -961,12 +961,12 @@ export default function AdminDashboardPage() {
                     >
                       {/* Tarjeta de corte Cuadrada con Borde Punteado */}
                       <div
-                        className={`w-full aspect-square bg-white rounded-3xl border-2 border-dashed border-slate-400 print:border-slate-500 p-6 flex flex-col items-center justify-between text-center shadow-xs print:shadow-none print:rounded-2xl transition box-border ${
+                        className={`w-full aspect-square bg-white rounded-3xl border-2 border-dashed border-slate-400 print:border-slate-500 p-5 sm:p-6 flex flex-col items-center justify-center gap-3 sm:gap-3.5 text-center shadow-xs print:shadow-none print:rounded-2xl transition box-border ${
                           layoutMode === 'vertical-2'
                             ? 'max-w-[340px] print:max-w-[145mm] print:max-h-[145mm] print:my-4'
                             : layoutMode === 'horizontal-2'
                             ? 'max-w-[320px] print:max-w-[125mm] print:max-h-[125mm]'
-                            : 'max-w-[250px] print:max-w-[88mm] print:max-h-[88mm] p-4'
+                            : 'max-w-[250px] print:max-w-[88mm] print:max-h-[88mm] p-4 gap-2'
                         }`}
                       >
                         {/* Cabecera superior: Logo y Pregunta */}
@@ -985,11 +985,11 @@ export default function AdminDashboardPage() {
                           </p>
                         </div>
 
-                        {/* Código QR Centrado */}
-                        <div className="p-2.5 sm:p-3 bg-white rounded-2xl border border-slate-200/90 shadow-2xs flex flex-col items-center my-auto">
+                        {/* Código QR Centrado (con tamaño optimizado y proporciones compactas) */}
+                        <div className="p-2 sm:p-2.5 bg-white rounded-2xl border border-slate-200/90 shadow-2xs flex flex-col items-center">
                           <QRCodeSVG
                             value={qrUrl || 'https://interelectricos.com'}
-                            size={layoutMode === 'vertical-2' ? 155 : layoutMode === 'horizontal-2' ? 135 : 105}
+                            size={layoutMode === 'vertical-2' ? 165 : layoutMode === 'horizontal-2' ? 145 : 110}
                             level="H"
                             includeMargin={false}
                           />

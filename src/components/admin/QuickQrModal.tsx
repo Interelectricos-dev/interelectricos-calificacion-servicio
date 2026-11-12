@@ -33,9 +33,9 @@ export function QuickQrModal({ asesor, onClose }: QuickQrModalProps) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4 animate-fadeIn print:static print:inset-auto print:bg-white print:p-0 print:block">
       {/* Tarjeta / Ficha que se imprime */}
-      <div className="w-full max-w-sm bg-white rounded-3xl p-6 shadow-2xl border border-slate-100 flex flex-col items-center text-center print:shadow-none print:border-2 print:border-dashed print:border-slate-400 print:rounded-2xl print:max-w-[140mm] print:aspect-square print:justify-between print:mx-auto print:my-12">
+      <div className="w-full max-w-sm bg-white rounded-3xl p-6 shadow-2xl border border-slate-100 flex flex-col items-center justify-center gap-3 text-center print:shadow-none print:border-2 print:border-dashed print:border-slate-400 print:rounded-2xl print:max-w-[140mm] print:aspect-square print:justify-center print:gap-3.5 print:mx-auto print:my-12">
         {/* Barra superior del Modal (Oculta al imprimir) */}
-        <div className="w-full flex items-center justify-between pb-3 border-b border-slate-100 mb-4 print:hidden">
+        <div className="w-full flex items-center justify-between pb-3 border-b border-slate-100 mb-1 print:hidden">
           <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Código QR de Atención</span>
           <button
             onClick={onClose}
@@ -50,19 +50,19 @@ export function QuickQrModal({ asesor, onClose }: QuickQrModalProps) {
         <img
           src="/images/logo-interelectricos.png"
           alt={ENV.companyName}
-          className="h-8 w-auto object-contain mb-3 print:h-9 print:mb-2"
+          className="h-8 w-auto object-contain print:h-9"
         />
 
         {/* Título en impresión */}
-        <div className="hidden print:block mb-2">
+        <div className="hidden print:block">
           <h3 className="font-black text-slate-900 text-base">¿Cómo fue tu atención hoy?</h3>
           <p className="text-xs text-slate-500">Escanea con tu celular y califica</p>
         </div>
 
         {/* Contenedor QR */}
-        <div className="p-3 bg-white rounded-2xl border-2 border-slate-200 shadow-inner flex flex-col items-center mb-3 print:border-slate-300 print:my-auto">
-          <QRCodeSVG value={url} size={165} level="H" />
-          <span className="text-[10px] text-slate-400 font-mono mt-1.5">
+        <div className="p-2.5 bg-white rounded-2xl border border-slate-200 shadow-2xs flex flex-col items-center print:border-slate-300">
+          <QRCodeSVG value={url} size={170} level="H" />
+          <span className="text-[10px] text-slate-400 font-mono mt-1">
             ID: {asesor.codigoSlug}
           </span>
         </div>
