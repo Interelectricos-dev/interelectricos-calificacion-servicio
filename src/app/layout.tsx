@@ -16,8 +16,8 @@ export const metadata: Metadata = {
   title: "Intereléctricos | Calificación de Servicio al Cliente",
   description: "Califica la atención recibida en mostrador en Intereléctricos",
   icons: {
-    icon: "/images/icono-interelectricos.png",
-    apple: "/images/icono-interelectricos.png",
+    icon: "/images/logo-interelectricos.png",
+    apple: "/images/logo-interelectricos.png",
   },
 };
 

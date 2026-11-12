@@ -248,14 +248,14 @@ export default function AdminDashboardPage() {
       <header className="bg-slate-950 text-white sticky top-0 z-30 shadow-md border-b border-slate-800 print:hidden">
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
           <div className="h-16 flex items-center justify-between gap-4">
-            {/* Logo e Identidad Corporativa INTERELECTRICOS (Completo en Alta Resolución) */}
+            {/* Logo e Identidad Corporativa INTERELECTRICOS (Completo en Alta Definición 1080x204) */}
             <div className="flex items-center gap-3 sm:gap-4 shrink-0">
               <Link href="/" className="flex items-center transition hover:opacity-90">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src="/images/logo-interelectricos.png"
                   alt={ENV.companyName}
-                  className="h-8 sm:h-9 md:h-10 w-auto object-contain max-w-[200px] sm:max-w-[240px]"
+                  className="h-8 sm:h-9 w-auto max-w-[210px] sm:max-w-[240px] object-contain"
                 />
               </Link>
               <div className="hidden md:block h-6 w-px bg-slate-800" />
