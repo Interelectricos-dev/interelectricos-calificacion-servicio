@@ -49,18 +49,16 @@ export function AdminLoginForm({ onSuccess }: AdminLoginFormProps) {
         <form onSubmit={handleSubmit} className="w-full flex flex-col gap-3">
           <div>
             <label htmlFor="admin-pin" className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">
-              PIN de Acceso
+              PIN o Contraseña de Acceso
             </label>
             <div className="relative">
               <input
                 id="admin-pin"
                 type="password"
-                inputMode="numeric"
-                maxLength={10}
                 value={pin}
                 onChange={(e) => setPin(e.target.value)}
-                placeholder="••••"
-                className="w-full text-center text-2xl tracking-widest font-mono py-3 px-4 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-[#f2e205] focus:border-slate-900 transition"
+                placeholder="••••••••"
+                className="w-full text-center text-xl tracking-widest font-mono py-3 px-4 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-[#f2e205] focus:border-slate-900 transition"
                 autoFocus
               />
               <Lock className="w-4 h-4 text-slate-400 absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none" />
@@ -68,7 +66,7 @@ export function AdminLoginForm({ onSuccess }: AdminLoginFormProps) {
             {error && (
               <p className="text-xs text-red-600 mt-2 flex items-center justify-center gap-1 font-medium">
                 <AlertCircle className="w-3.5 h-3.5" />
-                <span>PIN incorrecto. Inténtalo de nuevo.</span>
+                <span>Clave de acceso incorrecta. Inténtalo de nuevo.</span>
               </p>
             )}
           </div>
@@ -83,7 +81,7 @@ export function AdminLoginForm({ onSuccess }: AdminLoginFormProps) {
         </form>
 
         <p className="text-[11px] text-slate-400 text-center mt-6">
-          PIN por defecto en modo desarrollo: <code className="font-bold text-slate-700 bg-slate-100 px-1.5 py-0.5 rounded">1234</code>
+          Clave por defecto en desarrollo: <code className="font-bold text-slate-700 bg-slate-100 px-1.5 py-0.5 rounded">1234</code>
         </p>
       </div>
     </div>
