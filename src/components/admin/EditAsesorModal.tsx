@@ -141,3 +141,4 @@ export function EditAsesorModal({ asesor, isOpen, onClose, onUpdated }: EditAses
     </div>
   );
 }
+
