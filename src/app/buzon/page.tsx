@@ -13,6 +13,9 @@ import {
   Search,
   Filter,
   Zap,
+  Users,
+  Calendar,
+  RotateCcw,
 } from 'lucide-react';
 
 function getInitials(name?: string | null): string {
@@ -26,8 +29,14 @@ export default function BuzonPage() {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const [asesores, setAsesores] = useState<Asesor[]>([]);
   const [calificaciones, setCalificaciones] = useState<Calificacion[]>([]);
+  
+  // Filtros
   const [search, setSearch] = useState('');
+  const [filterAsesorId, setFilterAsesorId] = useState<string>('todos');
   const [filterRayos, setFilterRayos] = useState<'todos' | '5' | '4' | '3' | '2' | '1'>('todos');
+  const [fechaDesde, setFechaDesde] = useState<string>('');
+  const [fechaHasta, setFechaHasta] = useState<string>('');
+
   const [, startTransition] = useTransition();
 
   const isDbLive = isSupabaseConfigured();
@@ -58,14 +67,66 @@ export default function BuzonPage() {
     setIsAuthenticated(false);
   };
 
+  const isFiltered =
+    search.trim() !== '' ||
+    filterAsesorId !== 'todos' ||
+    filterRayos !== 'todos' ||
+    fechaDesde !== '' ||
+    fechaHasta !== '';
+
+  const handleResetFilters = () => {
+    setSearch('');
+    setFilterAsesorId('todos');
+    setFilterRayos('todos');
+    setFechaDesde('');
+    setFechaHasta('');
+  };
+
+  const filteredCalificaciones = useMemo(() => {
+    return calificaciones.filter((c) => {
+      const asesor = asesores.find((a) => a.id === c.asesorId);
+      const asesorNombre = asesor ? asesor.nombre.toLowerCase() : '';
+      const textoComentario = (c.comentario || '').toLowerCase();
+      const q = search.toLowerCase();
+
+      // 1. Búsqueda por texto
+      const matchesSearch = asesorNombre.includes(q) || textoComentario.includes(q);
+      if (!matchesSearch) return false;
+
+      // 2. Filtro por Asesor
+      if (filterAsesorId !== 'todos' && c.asesorId !== filterAsesorId) {
+        return false;
+      }
+
+      // 3. Filtro por Nivel de Rayos
+      if (filterRayos !== 'todos' && c.estrellas !== parseInt(filterRayos, 10)) {
+        return false;
+      }
+
+      // 4. Rango de Fechas (Desde - Hasta)
+      const fechaRegistro = new Date(c.createdAt);
+      if (fechaDesde) {
+        const dDesde = new Date(`${fechaDesde}T00:00:00`);
+        if (fechaRegistro < dDesde) return false;
+      }
+
+      if (fechaHasta) {
+        const dHasta = new Date(`${fechaHasta}T23:59:59`);
+        if (fechaRegistro > dHasta) return false;
+      }
+
+      return true;
+    });
+  }, [calificaciones, asesores, search, filterAsesorId, filterRayos, fechaDesde, fechaHasta]);
+
   const handleExportCSV = () => {
-    if (calificaciones.length === 0) {
-      alert('No hay calificaciones registradas para exportar.');
+    if (filteredCalificaciones.length === 0) {
+      alert('No hay calificaciones en el filtro actual para exportar.');
       return;
     }
 
-    const headers = ['ID', 'Fecha', 'Asesor', 'Rayos', 'Comentario', 'Device ID'];
-    const rows = calificaciones.map((c) => {
+    const headers = ['ID', 'Fecha y Hora', 'Asesor', 'Rayos', 'Comentario', 'Device ID'];
+    const rows = filteredCalificaciones.map((c) => {
       const asesor = asesores.find((a) => a.id === c.asesorId);
       return [
         c.id,
@@ -87,21 +148,6 @@ export default function BuzonPage() {
     link.click();
     document.body.removeChild(link);
   };
-
-  const filteredCalificaciones = useMemo(() => {
-    return calificaciones.filter((c) => {
-      const asesor = asesores.find((a) => a.id === c.asesorId);
-      const asesorNombre = asesor ? asesor.nombre.toLowerCase() : '';
-      const textoComentario = (c.comentario || '').toLowerCase();
-      const q = search.toLowerCase();
-
-      const matchesSearch = asesorNombre.includes(q) || textoComentario.includes(q);
-      const matchesRayos =
-        filterRayos === 'todos' ? true : c.estrellas === parseInt(filterRayos, 10);
-
-      return matchesSearch && matchesRayos;
-    });
-  }, [calificaciones, asesores, search, filterRayos]);
 
   if (isAuthenticated === null) return <div className="min-h-screen bg-slate-950" />;
   if (!isAuthenticated) return <AdminLoginForm onSuccess={() => setIsAuthenticated(true)} />;
@@ -132,38 +178,108 @@ export default function BuzonPage() {
             className="px-4 py-2.5 bg-slate-900 hover:bg-slate-800 active:scale-95 text-white text-xs font-bold rounded-xl flex items-center justify-center gap-2 transition shadow-xs cursor-pointer shrink-0"
           >
             <Download className="w-4 h-4 text-[#f2e205]" />
-            <span>Exportar CSV</span>
+            <span>Exportar CSV ({filteredCalificaciones.length})</span>
           </button>
         </div>
 
-        {/* Barra de Búsqueda y Filtro por Estrellas */}
-        <div className="bg-white p-3 rounded-2xl border border-slate-200/90 shadow-2xs mb-5 flex flex-col sm:flex-row items-center gap-2.5">
-          <div className="relative flex-1 w-full">
-            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-            <input
-              type="text"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Buscar en el texto de opiniones o por nombre de asesor..."
-              className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-9 pr-4 py-2 text-xs text-slate-800 placeholder-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#f2e205] focus:border-slate-900 transition"
-            />
+        {/* Panel Completo de Filtros: Búsqueda, Asesor, Rayos y Fechas (Desde - Hasta) */}
+        <div className="bg-white p-4 rounded-2xl border border-slate-200/90 shadow-2xs mb-6 flex flex-col gap-3">
+          {/* Fila 1: Buscador y Selects */}
+          <div className="flex flex-col lg:flex-row items-stretch lg:items-center gap-2.5">
+            {/* Buscador */}
+            <div className="relative flex-1 w-full">
+              <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <input
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Buscar por texto de opinión o nombre de asesor..."
+                className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-9 pr-4 py-2.5 text-xs text-slate-800 placeholder-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#f2e205] focus:border-slate-900 transition"
+              />
+            </div>
+
+            {/* Select Asesor */}
+            <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 w-full lg:w-64">
+              <Users className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+              <div className="flex flex-col w-full min-w-0">
+                <span className="text-[9px] font-bold uppercase tracking-wider text-slate-400">Asesor</span>
+                <select
+                  value={filterAsesorId}
+                  onChange={(e) => setFilterAsesorId(e.target.value)}
+                  className="bg-transparent text-xs font-semibold text-slate-800 focus:outline-none cursor-pointer truncate"
+                >
+                  <option value="todos">Todos los asesores</option>
+                  {asesores.map((a) => (
+                    <option key={a.id} value={a.id}>
+                      {a.nombre}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            {/* Select Calificación (Rayos) */}
+            <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 w-full lg:w-52">
+              <Filter className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+              <div className="flex flex-col w-full min-w-0">
+                <span className="text-[9px] font-bold uppercase tracking-wider text-slate-400">Calificación</span>
+                <select
+                  value={filterRayos}
+                  onChange={(e) => setFilterRayos(e.target.value as 'todos' | '5' | '4' | '3' | '2' | '1')}
+                  className="bg-transparent text-xs font-semibold text-slate-800 focus:outline-none cursor-pointer truncate"
+                >
+                  <option value="todos">Todas las valoraciones</option>
+                  <option value="5">⚡ 5 Rayos (Excelente)</option>
+                  <option value="4">⚡ 4 Rayos (Muy bueno)</option>
+                  <option value="3">⚡ 3 Rayos (Bueno)</option>
+                  <option value="2">⚡ 2 Rayos (Regular)</option>
+                  <option value="1">⚡ 1 Rayo (Malo)</option>
+                </select>
+              </div>
+            </div>
           </div>
 
-          <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 w-full sm:w-auto">
-            <Filter className="w-3.5 h-3.5 text-slate-400" />
-            <span className="text-[11px] font-bold text-slate-500 whitespace-nowrap">Filtrar:</span>
-            <select
-              value={filterRayos}
-              onChange={(e) => setFilterRayos(e.target.value as 'todos' | '5' | '4' | '3' | '2' | '1')}
-              className="bg-transparent text-xs font-semibold text-slate-800 focus:outline-none cursor-pointer"
-            >
-              <option value="todos">Todas las valoraciones</option>
-              <option value="5">⚡ 5 Rayos (Excelente)</option>
-              <option value="4">⚡ 4 Rayos (Muy bueno)</option>
-              <option value="3">⚡ 3 Rayos (Bueno)</option>
-              <option value="2">⚡ 2 Rayos (Regular)</option>
-              <option value="1">⚡ 1 Rayo (Malo)</option>
-            </select>
+          {/* Fila 2: Rango de Fechas (Desde - Hasta) y Botón de Limpiar */}
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 pt-2 border-t border-slate-100">
+            <div className="flex flex-wrap items-center gap-2.5">
+              <span className="text-[11px] font-bold text-slate-400 flex items-center gap-1">
+                <Calendar className="w-3.5 h-3.5 text-slate-400" />
+                <span>Rango de Fecha:</span>
+              </span>
+
+              <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1.5">
+                  <span className="text-[10px] font-medium text-slate-400">Desde:</span>
+                  <input
+                    type="date"
+                    value={fechaDesde}
+                    onChange={(e) => setFechaDesde(e.target.value)}
+                    className="bg-transparent text-xs font-semibold text-slate-800 focus:outline-none cursor-pointer"
+                  />
+                </div>
+
+                <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1.5">
+                  <span className="text-[10px] font-medium text-slate-400">Hasta:</span>
+                  <input
+                    type="date"
+                    value={fechaHasta}
+                    onChange={(e) => setFechaHasta(e.target.value)}
+                    className="bg-transparent text-xs font-semibold text-slate-800 focus:outline-none cursor-pointer"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {isFiltered && (
+              <button
+                type="button"
+                onClick={handleResetFilters}
+                className="px-3 py-1.5 rounded-xl text-xs font-bold text-slate-600 hover:text-slate-900 hover:bg-slate-100 border border-slate-200 transition flex items-center justify-center gap-1.5 cursor-pointer shrink-0 self-end sm:self-auto"
+              >
+                <RotateCcw className="w-3.5 h-3.5 text-amber-500" />
+                <span>Restablecer Filtros</span>
+              </button>
+            )}
           </div>
         </div>
 
@@ -174,8 +290,8 @@ export default function BuzonPage() {
               <MessageSquare className="w-12 h-12 mx-auto text-slate-300 mb-3" />
               <p className="text-sm font-bold text-slate-700">No se encontraron opiniones</p>
               <p className="text-xs text-slate-400 mt-1 max-w-sm mx-auto">
-                {search || filterRayos !== 'todos'
-                  ? 'No hay registros que coincidan con la búsqueda o el filtro de calificación.'
+                {isFiltered
+                  ? 'No hay registros que coincidan con los criterios de búsqueda, asesor o fechas seleccionadas.'
                   : 'Las opiniones enviadas por los clientes aparecerán aquí en tiempo real.'}
               </p>
             </div>
@@ -230,4 +346,3 @@ export default function BuzonPage() {
     </div>
   );
 }
-
