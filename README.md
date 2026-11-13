@@ -192,6 +192,16 @@ NEXT_PUBLIC_ADMIN_PIN=<clave_o_pin_de_acceso>
 
 ---
 
-## 9. Mantenimiento y Auditoría
+## 9. Documentación Detallada del Sistema
+
+Para profundizar en la operación y mantenimiento del proyecto, consulte los manuales especializados ubicados en el directorio [`docs/`](docs/):
+
+* [Manual de Usuario](docs/MANUAL_DE_USUARIO.md): Guía de operación, uso del panel administrativo, gestión de asesores, buzón de opiniones e impresión de material QR.
+* [Manual Técnico y Arquitectura](docs/MANUAL_TECNICO.md): Arquitectura de software modular (SRP), modelo entidad-relación, reglas de dominio y políticas de seguridad RLS.
+* [Guía de Despliegue y Configuración](docs/GUIA_DE_DESPLIEGUE.md): Requisitos de infraestructura, variables de entorno y despliegue continuo en Vercel y Supabase.
+
+---
+
+## 10. Mantenimiento y Auditoría
 
 Para auditorías o reportes externos, el panel administrativo incluye exportación completa en formato CSV estándar compatible con hojas de cálculo (Microsoft Excel, Google Sheets). Las marcas de tiempo se registran bajo zona horaria UTC y se renderizan localmente en hora estándar de Colombia (`es-CO`).
