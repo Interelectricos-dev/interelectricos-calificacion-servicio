@@ -108,7 +108,48 @@ Almacena las evaluaciones individuales emitidas por los clientes.
 
 ---
 
-## 5. Principios de Seguridad y Resiliencia
+## 5. Reglas de Negocio del Sistema (Business Rules)
+
+Para garantizar la integridad y coherencia funcional, el sistema implementa explícitamente las siguientes reglas de negocio:
+
+### RN-01: Generación y Desambiguación de Slugs
+* Al registrar un asesor, el sistema normaliza su nombre (convierte a minúsculas, elimina tildes y caracteres especiales mediante NFD y reemplaza espacios por guiones).
+* **Colisión de Nombres:** Si el slug generado ya existe en la base de datos (ej. un homónimo *Carlos Gómez*), el sistema anexa automáticamente un sufijo numérico aleatorio (`carlos-gomez-42`) para garantizar unicidad sin requerir intervención manual.
+
+### RN-02: Inmutabilidad del Identificador QR
+* El campo `codigo_slug` es estrictamente inmutable durante las operaciones de actualización (`updateAsesor`). Modificar el nombre comercial o el cargo de un asesor jamás alterará su slug, preservando la validez de las fichas impresas físicas en el punto de venta.
+
+### RN-03: Restricción Cuantitativa de Calificación
+* La valoración de servicio debe ser obligatoriamente un número entero comprendido entre 1 y 5 (escala de 1 a 5 Rayos de Energía). No se admiten valores nulos, decimales ni valores fuera de este rango (`CHECK (estrellas BETWEEN 1 AND 5)`).
+
+### RN-04: Sanitización y Límite de Comentarios
+* El campo de comentario es estrictamente opcional.
+* Si el cliente proporciona texto, este es saneado eliminando espacios vacíos en los extremos (*trim*). Si el texto resultante tiene longitud cero, se persiste como `NULL`.
+* La longitud máxima admitida es de **500 caracteres**. Cualquier texto que exceda dicho límite es truncado automáticamente antes de la persistencia.
+
+### RN-05: Control de Frecuencia y Prevención de Duplicados (Cooldown)
+* El sistema implementa una ventana de enfriamiento (*cooldown*) predeterminada de **3 horas (180 minutos)** por asesor (`NEXT_PUBLIC_RATING_COOLDOWN_HOURS`).
+* **Alcance por Asesor:** El bloqueo es específico por colaborador evaluado. Un cliente no puede calificar al mismo asesor dos veces en menos de 3 horas, pero sí puede calificar a otro asesor diferente en el mismo día si fue atendido en otro mostrador.
+* **Identificación del Dispositivo:** Se genera un hash anónimo persistente (`ie_device_fingerprint`) en el navegador del cliente que se almacena junto con cada calificación (`device_id`).
+
+### RN-06: Aislamiento del Modo de Prueba
+* El botón de reinicio y desbloqueo de pruebas solo es visible y funcional cuando la URL incluye el parámetro explícito `&mode=test`. Los clientes que escanean códigos QR físicos nunca tienen acceso a este parámetro ni pueden omitir el cooldown.
+
+### RN-07: Cálculo e Interpretación del CSAT y Estado Cero
+* El indicador de Satisfacción Neta (CSAT) se calcula como la proporción porcentual de calificaciones de **4 y 5 rayos** sobre el total de valoraciones emitidas.
+* **Tolerancia a Estado Cero:** Si no existen calificaciones registradas, el sistema devuelve `0.0` en promedio y `0%` en CSAT, previniendo divisiones por cero (`NaN`) tanto en el cliente como en el servidor.
+
+### RN-08: Conservación Histórica y Desactivación (Soft Delete)
+* Está prohibida la eliminación física de registros de asesores en la base de datos.
+* Los asesores desvinculados pasan a estado inactivo (`activo = false`). Esto deshabilita inmediatamente su código QR para recibir nuevas calificaciones, manteniendo intactos todos los registros históricos de evaluaciones y comentarios para auditorías gerenciales.
+
+### RN-09: Normalización y Zona Horaria de Auditoría
+* Todas las marcas de tiempo se registran en la base de datos bajo estándar universal UTC (`TIMESTAMPTZ`).
+* En las interfaces de usuario (Dashboard y Buzón) y en la exportación a CSV, las fechas se transforman y formatean en la zona horaria legal de Colombia (`es-CO`, UTC-5).
+
+---
+
+## 6. Principios de Seguridad y Resiliencia
 
 1. **Inmutabilidad del Código QR:**  
    El campo `codigo_slug` generado al crear el asesor es inmutable. Si el nombre o cargo de un asesor se corrige o actualiza, la URL física impresa continúa funcionando sin requerir reimpresión.
