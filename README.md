@@ -199,6 +199,7 @@ Para profundizar en la operación y mantenimiento del proyecto, consulte los man
 * [Manual de Usuario](docs/MANUAL_DE_USUARIO.md): Guía de operación, uso del panel administrativo, gestión de asesores, buzón de opiniones e impresión de material QR.
 * [Manual Técnico y Arquitectura](docs/MANUAL_TECNICO.md): Arquitectura de software modular (SRP), modelo entidad-relación, reglas de dominio y políticas de seguridad RLS.
 * [Guía de Despliegue y Configuración](docs/GUIA_DE_DESPLIEGUE.md): Requisitos de infraestructura, variables de entorno y despliegue continuo en Vercel y Supabase.
+* [Historial de Cambios (Changelog)](docs/CHANGELOG.md): Registro cronológico y versionado de auditoría de todas las mejoras y correcciones del sistema.
 
 ---
 
